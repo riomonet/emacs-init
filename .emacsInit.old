@@ -1,0 +1,886 @@
+
+(message "hello from org directory")
+
+(require 'package)
+(add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/"))
+(add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/"))
+
+
+(unless (package-installed-p 'use-package)
+  (package-refresh-contents)
+  (package-install 'use-package))
+(eval-and-compile
+  (setq use-package-always-ensure t
+	use-package-expand-minimally t))
+
+(global-visual-line-mode 1)
+
+(electric-pair-mode 1)
+(add-hook 'window-setup-hook 'toggle-frame-maximized t)
+
+(use-package flycheck
+  :ensure t
+  :init (global-flycheck-mode))
+
+(use-package projectile
+  :ensure t
+  :init
+  (projectile-mode +1)
+  :bind (:map projectile-mode-map
+              ("s-p" . projectile-command-map)
+              ("C-c p" . projectile-command-map)))
+
+(use-package which-key
+  :init
+  (which-key-mode)
+  :config
+  (which-key-setup-side-window-right-bottom)
+  (setq which-key-sort-order 'which-key-key-order-alpha
+    which-key-side-window-max-width 0.33
+    which-key-idle-delay 0.05)
+  :diminish which-key-mode)
+;; (provide 'init-which-key)	
+
+(use-package org-roam
+  :ensure t
+  :bind
+  ("C-c n l" . org-roam-buffer-toggle)
+  ("C-c n f" . org-roam-node-find)
+  ("C-c n i". org-roam-node-insert)
+  ("C-c n c" . org-roam-capture)
+  ("C-c n g" . org-roam-graph)
+  :config
+  (setq org-roam-directory (file-truename "~/org/org-roam"))
+  (org-roam-db-autosync-mode)
+   (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:25}" 'face 'org-tag))))
+
+
+(use-package marginalia
+  :config (marginalia-mode))		
+
+(load "/home/alpha/org/develop/az-elisp-function.el")
+
+
+
+(use-package rust-mode
+  :ensure t
+  :config
+  (setq rust-format-on-save t)
+  (add-hook 'rust-mode-hook
+            (lambda () (setq indent-tabs-mode nil)))
+  (add-hook 'rust-mode-hook
+            (lambda () (prettify-symbols-mode)))
+  )
+
+(use-package jupyter)
+
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((python . t)
+   (shell . t)))
+ 
+(use-package company)
+
+(use-package lsp-mode
+  :init
+  ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
+  (setq lsp-keymap-prefix "C-c l")
+  :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
+         (python-mode . lsp)
+	 (c-mode-hook . lsp)
+	 (c++-mode-hook . lsp)
+         ;; if you want which-key integration
+         (lsp-mode . lsp-enable-which-key-integration))
+  :commands lsp)
+
+;;(use-package lsp-ui :commands lsp-ui-mode)
+(add-hook 'after-init-hook 'global-company-mode)
+
+(use-package yasnippet
+ :ensure t
+ :config (use-package yasnippet-snippets
+          :ensure t)
+ :hook
+         (python-mode . yas-minor-mode)
+	 (c-mode-hook . yas-minor-mode)
+	 (c++-mode-hook . yas-minor-mode)
+(yas-reload-all))
+
+
+      
+ 
+ 
+
+
+(use-package expand-region
+  :ensure t
+  :bind ("M-m" . er/expand-region))
+
+
+(use-package vertico
+  :init	     
+  (vertico-mode)
+  (setq vertico-resize t)
+  (setq vertico-count 40)
+  (setq vertico-scroll-margin 0)
+  )
+
+(advice-add #'vertico--format-candidate :around
+            (lambda (orig cand prefix suffix index _start)
+              (setq cand (funcall orig cand prefix suffix index _start))
+              (concat
+               (if (= vertico--index index)
+                   (propertize "->" 'face 'vertico-current)
+                 "  ")
+               cand)))
+
+(use-package orderless
+   :init
+       ;; Configure a custom style dispatcher (see the Consult wiki)
+       ;; (setq orderless-style-dispatchers '(+orderless-dispatch)
+       ;;       orderless-component-separator #'orderless-escapable-split-on-space)
+       (setq completion-styles '(orderless)
+             completion-category-defaults nil
+             completion-category-overrides '((file (styles partial-completion)))))
+
+(use-package consult
+  :ensure t
+  :bind
+  ("C-x b" . consult-buffer)
+  ("C-x L" . consult-line)
+  ("M-y" . consult-yank-pop))
+
+  
+	
+(setq backup-directory-alist '(("." . "~/.emacs.d/.saves")))
+
+(use-package magit
+  :ensure t)
+
+
+
+; (global-set-key (kbd "C-c h")' helm-command-prefix) 
+(global-unset-key (kbd "C-x c"))
+
+;;General Keys I need to set always
+(global-set-key (kbd "M-o") 'other-window)
+(global-set-key (kbd "C-=") 'text-scale-increase)
+(global-set-key (kbd "C--") 'text-scale-decrease)
+
+(defun bms/org-roam-rg-search ()
+  "Search org-roam directory using consult-ripgrep. With live-preview."
+  (interactive)
+  (let ((consult-ripgrep-command "rg --null --ignore-case  --type org --line-buffered --color=always --max-columns=500 --no-heading --line-number . -e ARG OPTS"))
+    (consult-ripgrep org-roam-directory)))
+
+(global-set-key (kbd "C-c rr") 'bms/org-roam-rg-search)
+
+;; Open full size no menu's
+'(Initial-frame-alist '((fullscreen . maximized)))
+(menu-bar-mode -1)
+(toggle-scroll-bar -1)
+(tool-bar-mode -1)
+
+(global-set-key "\C-ca" 'org-agenda)
+(define-key global-map "\C-cc" 'org-capture)
+
+(use-package embark
+  :ensure t
+  :bind
+  (("C-." . embark-act)         ;; pick some comfortable binding
+   ("C-;" . embark-dwim)        ;; good alternative: M-.
+   ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
+
+  :init
+
+  ;; Optionally replace the key help with a completing-read interface
+  (setq prefix-help-command #'embark-prefix-help-command)
+
+  :config
+
+  ;; Hide the mode line of the Embark live/completions buffers
+  (add-to-list 'display-buffer-alist
+               '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+                 nil
+                 (window-parameters (mode-line-format . none)))))
+
+;; Consult users will also want the embark-consult package.
+(use-package embark-consult
+  :ensure t
+  :after (embark consult)
+  :demand t ; only necessary if you have the hook below
+  ;; if you want to have consult previews as you move around an
+  ;; auto-updating embark collect buffer
+  :hook
+  (embark-collect-mode . consult-preview-at-point-mode))
+
+(setq org-hide-emphasis-markers t)
+
+  (font-lock-add-keywords 'org-mode
+                          '(("^ *\\([-]\\) "
+                             (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
+
+
+  (use-package org-bullets
+    :config
+    (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+
+
+;;   (let* ((variable-tuple
+;;            (cond ((x-list-fonts "ETBembo")         '(:font "ETBembo"))
+;;                  ((x-list-fonts "Source Sans Pro") '(:font "Source Sans Pro"))
+;;                  ((x-list-fonts "Lucida Grande")   '(:font "Lucida Grande"))
+;;                  ((x-list-fonts "Verdana")         '(:font "Verdana"))
+;;                  ((x-family-fonts "Sans Serif")    '(:family "Sans Serif"))
+;;                  (nil (warn "Cannot find a Sans Serif Font.  Install Source Sans Pro."))))
+;;           (base-font-color     (face-foreground 'default nil 'default))
+;;           (headline           `(:inherit default :weight normal :foreground ,base-font-color)))
+
+;;      (custom-theme-set-faces
+;;       'user
+;;       `(org-level-8 ((t (,@headline ,@variable-tuple))))
+;;       `(org-level-7 ((t (,@headline ,@variable-tuple))))
+;;       `(org-level-6 ((t (,@headline ,@variable-tuple))))
+;;       `(org-level-5 ((t (,@headline ,@variable-tuple))))
+;;       `(org-level-4 ((t (,@headline ,@variable-tuple :height .50))))
+;;       `(org-level-3 ((t (,@headline ,@variable-tuple :height .75))))
+;;       `(org-level-2 ((t (,@headline ,@variable-tuple :height .75))))
+;;       `(org-level-1 ((t (,@headline ,@variable-tuple :height 1.0))))
+;;       `(org-document-title ((t (,@headline ,@variable-tuple :height 1.5 :underline t))))))
+
+
+;;    (custom-theme-set-faces
+;;     'user
+;;     '(variable-pitch ((t (:family "ETBembo" :height 180 :weight thin)))))
+;; ;;    '(fixed-pitch ((t ( :family "Fira Code Retina" :height 160)))))
+
+;;    (add-hook 'org-mode-hook 'variable-pitch-mode)
+;;    (set-face-attribute 'org-table nil :inherit 'fixed-pitch)
+
+ ;; (custom-theme-set-faces
+ ;;  'user
+ ;;  '(org-block ((t (:inherit fixed-pitch))))
+ ;;  '(org-code ((t (:inherit (shadow fixed-pitch)))))
+ ;;  '(org-document-info ((t (:foreground "dark orange"))))
+ ;;  '(org-document-info-keyword ((t (:inherit (shadow fixed-pitch)))))
+ ;;  '(org-indent ((t (:inherit (org-hide fixed-pitch)))))
+ ;;  '(org-link ((t (:foreground "royal blue" :underline t))))
+ ;;  '(org-meta-line ((t (:inherit (font-lock-comment-face fixed-pitch)))))
+ ;;  '(org-property-value ((t (:inherit fixed-pitch))) t)
+ ;;  '(org-special-keyword ((t (:inherit (font-lock-comment-face fixed-pitch)))))
+ ;;  '(org-table ((nil (:inherit fixed-pitch :foreground "#83a598"))))
+ ;;  '(org-tag ((t (:inherit (shadow fixed-pitch) :weight bold :height 0.8))))
+ ;;  '(org-verbatim ((t (:inherit (shadow fixed-pitch))))))
+
+
+
+(require 'org-crypt)
+(org-crypt-use-before-save-magic)
+(setq org-tags-exclude-from-inheritance (quote ("crypt")))
+(setq org-crypt-key nil)
+
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(ansi-color-names-vector
+   ["#3F3F3F" "#CC9393" "#7F9F7F" "#F0DFAF" "#8CD0D3" "#DC8CC3" "#93E0E3" "#DCDCCC"])
+ '(company-quickhelp-color-background "#4F4F4F")
+ '(company-quickhelp-color-foreground "#DCDCCC")
+ '(custom-safe-themes
+   '("fa2b58bb98b62c3b8cf3b6f02f058ef7827a8e497125de0254f56e373abee088" "01fb4210c4f4eac87e5d176dcbe0a213d754f76e0a6ac739c6d871b517015d01" "86b7a704f54789cae5c618a912a06fdff96431036f3e22d2961465e2042ae84d" "e6df46d5085fde0ad56a46ef69ebb388193080cc9819e2d6024c9c6e27388ba9" default))
+ '(exec-path
+   '("/usr/local/sbin" "/usr/local/bin" "/usr/sbin" "/usr/bin" "/sbin" "/bin" "/usr/games" "/usr/local/games" "/snap/bin" "/usr/lib/emacs/27.1/x86_64-linux-gnu" "/home/alpha/.local/bin"))
+ '(fci-rule-color "#383838")
+ '(helm-completion-style 'emacs)
+ '(hl-todo-keyword-faces
+   '(("TODO" . "#dc752f")
+     ("NEXT" . "#dc752f")
+     ("THEM" . "#2d9574")
+     ("PROG" . "#3a81c3")
+     ("OKAY" . "#3a81c3")
+     ("DONT" . "#f2241f")
+     ("FAIL" . "#f2241f")
+     ("DONE" . "#42ae2c")
+     ("NOTE" . "#b1951d")
+     ("KLUDGE" . "#b1951d")
+     ("HACK" . "#b1951d")
+     ("TEMP" . "#b1951d")
+     ("FIXME" . "#dc752f")
+     ("XXX+" . "#dc752f")
+     ("\\?\\?\\?+" . "#dc752f")))
+ '(nrepl-message-colors
+   '("#CC9393" "#DFAF8F" "#F0DFAF" "#7F9F7F" "#BFEBBF" "#93E0E3" "#94BFF3" "#DC8CC3"))
+ '(org-agenda-files '("~/org/org-files/todo.org" "~/org/.techbase"))
+ '(org-agenda-follow-indirect nil)
+ '(org-fontify-done-headline nil)
+ '(org-fontify-todo-headline nil)
+ '(package-selected-packages
+   '(skewer-mode prettier web-mode js2-mode emmet-mode yasnippet-snippets company-box expand-region yasnippet projectile flycheck company company-mode company-lsp lsp-pyright jupyter display-line-numbers face-remap emacs frame olivetti rust-mode org-bullets modus-themes deadgrep embark-consult embark consult orderless vertico marginalia magit use-package ggtags zenburn-theme helm))
+ '(pdf-view-midnight-colors '("#DCDCCC" . "#383838"))
+ '(python-shell-interpreter "python3")
+ '(vc-annotate-background "#2B2B2B")
+ '(vc-annotate-color-map
+   '((20 . "#BC8383")
+     (40 . "#CC9393")
+     (60 . "#DFAF8F")
+     (80 . "#D0BF8F")
+     (100 . "#E0CF9F")
+     (120 . "#F0DFAF")
+     (140 . "#5F7F5F")
+     (160 . "#7F9F7F")
+     (180 . "#8FB28F")
+     (200 . "#9FC59F")
+     (220 . "#AFD8AF")
+     (240 . "#BFEBBF")
+     (260 . "#93E0E3")
+     (280 . "#6CA0A3")
+     (300 . "#7CB8BB")
+     (320 . "#8CD0D3")
+     (340 . "#94BFF3")
+     (360 . "#DC8CC3")))
+ '(vc-annotate-very-old-color "#DC8CC3"))
+
+(defun xscheme ()
+  "load scheme and runs a scheme process in the current buffer"
+  (interactive)
+  (load-library "xscheme")
+  (xscheme-start "scheme -emacs"
+		 (buffer-name)
+		 (buffer-name)))
+
+
+(global-set-key (kbd "<f5>") (lambda ()
+                               (interactive)
+                               (setq-local compilation-read-command nil)
+                               (call-interactively 'compile)))
+
+
+(require 'compile)
+(setq compilation-last-buffer nil)
+
+(defun compile-again (ARG)
+  "Run the same compile as the last time.
+If there is no last time, or there is a prefix argument, this acts like M-x compile."
+  (interactive "p")
+  (if (and (eq ARG 1)
+           compilation-last-buffer)
+      (progn
+        (set-buffer compilation-last-buffer)
+        (revert-buffer t t))
+    (progn
+      (call-interactively 'compile)
+      (setq cur (selected-window))
+      (setq w (get-buffer-window "*compilation*"))
+      (select-window w)
+      (setq h (window-height w))
+      (shrink-window (- h 10))
+      (select-window cur))))
+(global-set-key (kbd "C-x C-m") 'compile-again)
+
+
+
+
+(defun compilation-exit-autoclose (STATUS code msg)
+  "Close the compilation window if there was no error at all."
+  ;; If M-x compile exists with a 0
+  (when (and (eq STATUS 'exit) (zerop code))
+    ;; then bury the *compilation* buffer, so that C-x b doesn't go there
+    (bury-buffer)
+    ;; and delete the *compilation* window
+    (delete-window (get-buffer-window (get-buffer "*compilation*")))
+  ;; Always return the anticipated result of compilation-exit-message-function
+  (cons msg code)))
+
+ (setq compilation-exit-message-function 'compilation-exit-autoclose)
+
+ 
+(defvar all-overlays ())
+
+
+(defun delete-this-overlay(overlay is-after begin end &optional len)
+  (delete-overlay overlay)
+  )
+
+
+(defun highlight-current-line ()
+"Highlight current line."
+  (interactive)
+  (setq current-point (point))
+  (beginning-of-line)
+  (setq beg (point))
+  (forward-line 1)
+  (setq end (point))
+  ;; Create and place the overlay
+  (setq error-line-overlay (make-overlay 1 1))
+
+  ;; Append to list of all overlays
+  (setq all-overlays (cons error-line-overlay all-overlays))
+
+  (overlay-put error-line-overlay
+               'face '(background-color . "red"))
+  (overlay-put error-line-overlay
+               'modification-hooks (list 'delete-this-overlay))
+  (move-overlay error-line-overlay beg end)
+  (goto-char current-point))
+
+(defun delete-all-overlays ()
+  "Delete all overlays"
+  (while all-overlays
+    (delete-overlay (car all-overlays))
+    (setq all-overlays (cdr all-overlays))))
+
+
+(defun highlight-error-lines(compilation-buffer process-result)
+  (interactive)
+  (delete-all-overlays)
+  (condition-case nil
+      (while t
+        (next-error)
+        (highlight-current-line))
+    (error nil)))
+(setq compilation-finish-functions 'highlight-error-lines)
+
+
+(setq x-select-enable-clipboard t)
+
+
+
+(defun my/create-techbase-file ()
+    "Create an org file in ~/org/.techbase/"
+    (interactive)
+    (let ((name (read-string "Filename: ")))
+      (expand-file-name (format "%s.org"
+                                  name) "~/org/.techbase")))
+
+
+(setq days (- 1 (org-time-stamp-to-now "2022-04-07")))
+(setq org-capture-templates
+      ;; other capture templates
+     '(
+        ("t" "Todo" entry (file+headline "~/org/org-files/todo.org" "Tasks")
+         "* TODO %? %^{EFFORT}p")
+        ("f" "Fleeting_notes" entry  (file "~/org/org-roam/inbox.org")
+        "* %?\n")
+	("b" "tech_base" plain  (file my/create-techbase-file) "* + %^G \n%?")
+	("m" "macros" plain (file "~/org/org-files/macros.org") "\n* day %(number-to-string days ) %t\n%[~/org/org-files/cro_template.org]")))
+
+
+
+
+;; (defun jethro/org-capture-slipbox ()
+;;   (interactive)
+;;   (org-capture nil "s"))
+
+
+
+(setq org-roam-capture-templates
+      '(("m" "main" plain
+	 "%?"
+	 :if-new (file+head "reference/${slug}.org"
+			    "#+title: ${title}\n")
+	 :immediate-finish t
+	 :unnarrowed t)))
+
+
+
+(setq org-todo-keywords
+       '((type "TODO(t)" "APPT(a)" "WAITING(w)" "PAYMENT_DUE(p)" "|" "DONE(d)")))
+
+(setq org-todo-keyword-faces
+      (quote (("TODO" :foreground "red" :weight bold)
+              ("DONE" :foreground "forest green" :weight bold)
+              ("WAITING" :foreground "yellow" :weight bold)
+              ("APPT" :foreground "orange" :weight bold)
+              ("MEETING" :foreground "forest green" :weight bold))))
+
+
+
+
+
+
+
+;**************************************************************************
+;; (use-package ggtags)
+
+;**************************************************************************
+;; (defun my-compilation-hook ()
+;;   "Make sure that the compile window is splitting vertically."
+;;   (progn
+;;     (if (not (get-buffer-window "*compilation*"))
+;;         (progn
+;;           (split-window-vertically)))))
+
+
+;; (add-hook 'compilation-mode-hook 'my-compilation-hook)
+
+;;**************************************************************************
+
+;; Run C programs directly from within emacs
+;; (defun execute-c-program ()
+;;   (interactive)
+;;   (defvar foo)
+;;   (setq foo (concat "gcc " (buffer-name) " && ./a.out" ))
+;;   (shell-command foo))
+
+;; (global-set-key (kbd "<f6>") 'execute-c-program)
+
+
+;;**************************************************************************
+;; ggtags keybindings
+
+;; (require 'ggtags)
+;; (add-hook 'c-mode-common-hook
+;;           (lambda ()
+;;             (when (derived-mode-p 'c-mode 'c++-mode 'java-mode 'asm-mode)
+;;               (ggtags-mode 1))))
+
+;; (define-key ggtags-mode-map (kbd "C-c g s") 'ggtags-find-other-symbol)
+;; (define-key ggtags-mode-map (kbd "C-c g h") 'ggtags-view-tag-history)
+;; (define-key ggtags-mode-map (kbd "C-c g r") 'ggtags-find-reference)
+;; (define-key ggtags-mode-map (kbd "C-c g f") 'ggtags-find-file)
+;; (define-key ggtags-mode-map (kbd "C-c g c") 'ggtags-create-tags)
+;; (define-key ggtags-mode-map (kbd "C-c g u") 'ggtags-update-tags)
+;; (define-key ggtags-mode-map (kbd "M-,") 'pop-tag-mark)
+
+;; ggtags helm bindings
+;; (setq
+;;  helm-gtags-ignore-case t
+;;  helm-gtags-auto-update t
+;;  helm-gtags-use-input-at-cursor t
+;;  helm-gtags-pulse-at-cursor t
+;;  helm-gtags-prefix-key "\C-cg"
+;;  helm-gtags-suggested-key-mapping t
+;;  )
+
+;; (require 'helm-gtags)
+;; ;; Enable helm-gtags-mode
+;; (add-hook 'dired-mode-hook 'helm-gtags-mode)
+;; (add-hook 'eshell-mode-hook 'helm-gtags-mode)
+;; (add-hook 'c-mode-hook 'helm-gtags-mode)
+;; (add-hook 'c++-mode-hook 'helm-gtags-mode)
+;; (add-hook 'asm-mode-hook 'helm-gtags-mode)
+
+;; (define-key helm-gtags-mode-map (kbd "C-c g a") 'helm-gtags-tags-in-this-function)
+;; (define-key helm-gtags-mode-map (kbd "C-j") 'helm-gtags-select)
+;; (define-key helm-gtags-mode-map (kbd "M-.") 'helm-gtags-dwim)
+;; (define-key helm-gtags-mode-map (kbd "M-,") 'helm-gtags-pop-stack)
+;; (define-key helm-gtags-mode-map (kbd "C-c <") 'helm-gtags-previous-history)
+;; (define-key helm-gtags-mode-map (kbd "C-c >") 'helm-gtags-next-history)
+
+
+;;**************************************************************************
+
+;; (setq make-backup-files nil)
+
+;; (elpy-enable)
+
+
+;; (require 'org-install)
+;; (require 'org-capture)
+;; (require 'org-bullets)
+;; (require 'org-journal)
+;; (require 'better-defaults)
+
+
+;; (add-hook 'prog-mode-hook 'hs-minor-mode)
+;; (add-hook 'prog-mode-hook 'line-number-mode)
+
+;; (add-to-list 'exec-path "/usr/local/bin/")
+;; (setenv "PATH" (concat "/usr/local/bin:"
+;; 		       (getenv "PATH")))
+;; (setq org-enforce-todo-dependencies 't)
+;; (setq org-clock-into-drawer "CLOCKING")
+;; (setq org-agenda-dim-blocked-tasks 't)
+;; (setq org-startup-indented 't)
+;; (setq org-agenda-files (file-expand-wildcards "~/org/*.org"))
+;; (setq org-bullets-bullet-list '("►" "○" "●" "-" "*"))
+;; (setq org-agenda-overriding-columns-format '"%50ITEM %TODO %8EFFORT{:} %10CLOCKSUM")
+;; (setq org-global-properties (quote (("Effort_ALL" . "0:05 0:10 0:15 0:20 0:30 0:45 1:00 1:30 2:00")
+;;                                     ("STYLE_ALL" . "habit"))))
+
+;; (setq org-columns-default-format "%50ITEM(Task) %TODO %10Effort(Effort){:} %10CLOCKSUM")
+
+
+;; (global-auto-revert-mode 1)
+
+;; ; global keys
+
+;; (global-set-key (kbd "C-c r") 'revert-buffer)
+;; (global-set-key (kbd "M-o") 'other-window)
+;; (global-set-key "\C-cl" 'org-store-link)
+
+;; (global-set-key "\C-cc" 'org-capture)
+;; (global-set-key "\C-cb" 'org-iswitchb)
+;; (global-set-key "\M-n" 'gs/org-agenda-next-section)
+;; (global-set-key "\M-p" 'gs/org-agenda-prev-section)
+;; (global-set-key "\C-\\" 'hs-toggle-hiding)
+;; (global-set-key "\M-+" 'hs-show-all)
+;; (global-set-key "\M-=" 'hs-hide-all)
+;; (global-set-key (kbd "C-c 1") 'org-clock-goto)
+;; (global-set-key (kbd "<f9>") 'mu4e)
+
+;; ;hooks
+;; (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
+
+;; ;; Search for a "=" and go to the next line
+;; (defun gs/org-agenda-next-section ()
+;;   "Go to the next section in an org agenda buffer"
+;;   (interactive)
+;;   (if (search-forward "===" nil t 1)
+;;       (forward-line 1)
+;;     (goto-char (point-max)))
+;;   (beginning-of-line))
+
+;; ; Search for a "=" and go to the previous line
+;; (defun gs/org-agenda-prev-section ()
+;;   "Go to the next section in an org agenda buffer"
+;;   (interactive)
+;;   (forward-line -2)
+;;   (if (search-forward "===" nil t -1)
+;;       (forward-line 1)
+;;     (goto-char (point-min))))
+
+; (global-set-key (kbd "M-x") 'helm-M-x)
+
+; (global-set-key (kbd "M-y") 'helm-show-kill-ring)
+; (global-set-key (kbd "C-x C-f") 'helm-find-files)
+; (global-set-key (kbd "C-x b") 'helm-mini)
+; (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action) ; rebind tab to do persistent action
+; (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action) ; make TAB works in terminal
+; (define-key helm-map (kbd "C-z")  'helm-select-action) ; list actions using C-z
+; (when (executable-find "ack-grep")
+;   (setq helm-grep-default-command "ack-grep -Hn --no-group --no-color %e %p %f"
+;         helm-grep-default-recurse-command "ack-grep -H --no-group --no-color %e %p %f"))
+; (helm-mode 1)
+; ;end Helm
+; (use-package helm
+;   :ensure t
+;   :demand
+;   :bind (("M-x" . helm-M-x)
+;          ("C-x C-f" . helm-find-files)
+;          ("C-x b" . helm-buffers-list)
+;          ("C-x c o" . helm-occur)) ;SC
+;          ("M-y" . helm-show-kill-ring) ;SC
+;          ("C-x r b" . helm-filtered-bookmarks) ;SC
+;   :preface (require 'helm-config)
+;   :config (helm-mode 1))
+;;(custom-set-faces	     
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ ;; '(org-document-title ((t (:inherit default :weight normal :foreground "#DCDCCC" :font "Verdana" :height 1.5 :underline t))))
+ ;; '(org-level-1 ((t (:inherit default :weight normal :foreground "#DCDCCC" :font "Verdana" :height 1.0))))
+ ;; '(org-level-2 ((t (:inherit default :weight normal :foreground "#DCDCCC" :font "Verdana" :height 0.75))))
+ ;; '(org-level-3 ((t (:inherit default :weight normal :foreground "#DCDCCC" :font "Verdana" :height 0.75))))
+ ;; '(org-level-4 ((t (:inherit default :weight normal :foreground "#DCDCCC" :font "Verdana" :height 0.5))))
+ ;; '(org-level-5 ((t (:inherit default :weight normal :foreground "#DCDCCC" :font "Verdana"))))
+ ;; '(org-level-6 ((t (:inherit default :weight normal :foreground "#DCDCCC" :font "Verdana"))))
+ ;; '(org-level-7 ((t (:inherit default :weight normal :foreground "#DCDCCC" :font "Verdana"))))
+ ;; '(org-level-8 ((t (:inherit default :weight normal :foreground "#DCDCCC" :font "Verdana"))))
+ ;; '(variable-pitch ((t (:family "ETBembo" :height 180 :weight thin)))))
+
+
+(use-package modus-themes
+  :ensure
+  :init
+  ;; Add all your customizations prior to loading the themes
+  (setq modus-themes-italic-constructs t
+        modus-themes-bold-constructs nil
+        modus-themes-region '(bg-only no-extend))
+
+  ;; Load the theme files before enabling a theme
+  (modus-themes-load-themes)
+  :config
+  ;; Load the theme of your choice:
+  (modus-themes-load-operandi) ;; OR (modus-themes-load-vivendi)
+  :bind ("<f5>" . modus-themes-toggle))
+
+
+(setq modus-themes-italic-constructs t
+      modus-themes-bold-constructs nil
+      modus-themes-mixed-fonts nil
+      modus-themes-subtle-line-numbers nil
+      modus-themes-intense-mouseovers nil
+      modus-themes-deuteranopia t
+      modus-themes-tabs-accented t
+      modus-themes-variable-pitch-ui nil
+      modus-themes-inhibit-reload t ; only applies to `customize-set-variable' and related
+
+      modus-themes-fringes nil ; {nil,'subtle,'intense}
+
+      ;; Options for `modus-themes-lang-checkers' are either nil (the
+      ;; default), or a list of properties that may include any of those
+      ;; symbols: `straight-underline', `text-also', `background',
+      ;; `intense' OR `faint'.
+      modus-themes-lang-checkers nil
+
+      ;; Options for `modus-themes-mode-line' are either nil, or a list
+      ;; that can combine any of `3d' OR `moody', `borderless',
+      ;; `accented', a natural number for extra padding (or a cons cell
+      ;; of padding and NATNUM), and a floating point for the height of
+      ;; the text relative to the base font size (or a cons cell of
+      ;; height and FLOAT)
+      modus-themes-mode-line '(accented borderless (padding . 4) (height . 0.9))
+
+      ;; Same as above:
+      ;; modus-themes-mode-line '(accented borderless 4 0.9)
+
+      ;; Options for `modus-themes-markup' are either nil, or a list
+      ;; that can combine any of `bold', `italic', `background',
+      ;; `intense'.
+      modus-themes-markup '(background italic)
+
+      ;; Options for `modus-themes-syntax' are either nil (the default),
+      ;; or a list of properties that may include any of those symbols:
+      ;; `faint', `yellow-comments', `green-strings', `alt-syntax'
+      modus-themes-syntax nil
+
+      ;; Options for `modus-themes-hl-line' are either nil (the default),
+      ;; or a list of properties that may include any of those symbols:
+      ;; `accented', `underline', `intense'
+      modus-themes-hl-line '(underline accented)
+
+      ;; Options for `modus-themes-paren-match' are either nil (the
+      ;; default), or a list of properties that may include any of those
+      ;; symbols: `bold', `intense', `underline'
+      modus-themes-paren-match '(bold intense)
+
+      ;; Options for `modus-themes-links' are either nil (the default),
+      ;; or a list of properties that may include any of those symbols:
+      ;; `neutral-underline' OR `no-underline', `faint' OR `no-color',
+      ;; `bold', `italic', `background'
+      modus-themes-links '(neutral-underline background)
+
+      ;; Options for `modus-themes-box-buttons' are either nil (the
+      ;; default), or a list that can combine any of `flat', `accented',
+      ;; `faint', `variable-pitch', `underline', `all-buttons', the
+      ;; symbol of any font weight as listed in `modus-themes-weights',
+      ;; and a floating point number (e.g. 0.9) for the height of the
+      ;; button's text.
+      modus-themes-box-buttons '(variable-pitch flat faint 0.9)
+
+      ;; Options for `modus-themes-prompts' are either nil (the
+      ;; default), or a list of properties that may include any of those
+      ;; symbols: `background', `bold', `gray', `intense', `italic'
+      modus-themes-prompts '(intense bold)
+
+      ;; The `modus-themes-completions' is an alist that reads three
+      ;; keys: `matches', `selection', `popup'.  Each accepts a nil
+      ;; value (or empty list) or a list of properties that can include
+      ;; any of the following (for WEIGHT read further below):
+      ;;
+      ;; `matches' - `background', `intense', `underline', `italic', WEIGHT
+      ;; `selection' - `accented', `intense', `underline', `italic', `text-also' WEIGHT
+      ;; `popup' - same as `selected'
+      ;; `t' - applies to any key not explicitly referenced (check docs)
+      ;;
+      ;; WEIGHT is a symbol such as `semibold', `light', or anything
+      ;; covered in `modus-themes-weights'.  Bold is used in the absence
+      ;; of an explicit WEIGHT.
+      modus-themes-completions '((matches . (extrabold))
+                                 (selection . (semibold accented))
+                                 (popup . (accented intense)))
+
+      modus-themes-mail-citations nil ; {nil,'intense,'faint,'monochrome}
+
+      ;; Options for `modus-themes-region' are either nil (the default),
+      ;; or a list of properties that may include any of those symbols:
+      ;; `no-extend', `bg-only', `accented'
+      modus-themes-region '(bg-only no-extend)
+
+      ;; Options for `modus-themes-diffs': nil, 'desaturated, 'bg-only
+      modus-themes-diffs 'desaturated
+
+      modus-themes-org-blocks 'gray-background ; {nil,'gray-background,'tinted-background}
+
+      modus-themes-org-agenda ; this is an alist: read the manual or its doc string
+      '((header-block . (variable-pitch 1.3))
+        (header-date . (grayscale workaholic bold-today 1.1))
+        (event . (accented varied))
+        (scheduled . uniform)
+        (habit . traffic-light))
+
+      modus-themes-headings ; this is an alist: read the manual or its doc string
+      '((1 . (overline background variable-pitch 1.3))
+        (2 . (rainbow overline 1.1))
+        (t . (semibold))))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
+
+
+
+
+
+;; some rust stuff i found need for later
+;; ;; init-rust.el
+;; (use-package rust-mode)
+;; (use-package flymake-rust)
+;; (use-package racer)
+;; (use-package company)
+;; (use-package cargo
+;;   :config
+;;   (add-hook 'rust-mode-hook 'cargo-minor-mode))
+;; (use-package flycheck-rust)
+;; (with-eval-after-load 'rust-mode
+;;   (add-hook 'flycheck-mode-hook #'flycheck-rust-setup))
+;; (provide 'init-rust)
+
+
+
+
+;; (use-package smartparens
+;;   :config
+;;   (require 'smartparens-config)
+;;   (add-hook 'lisp-mode-hook #'smartparens-strict-mode))
+;; (provide 'init-smartparens)
+
+
+;; (use-package visual-regexp
+;;    :ensure t
+;;    :bind
+;;    ("C-c r" . vr/replace)
+;;    ("C-c q" . vr/query-replace)
+;;    )
+
+;; (use-package zenburn-theme
+;;   :ensure t
+;;   :config
+;;   (load-theme 'zenburn t))
+
+(setq gc-cons-threshold (* 100 1024 1024)
+	company-idle-delay 0.500
+	lsp-completion-provider :capf
+	lsp-log-io nil
+	lsp-idle-delay 0.500
+	lsp-enable-links nil
+	lsp-signature-render-documentation nil
+	lsp-headerline-breadcrumb-enable nil
+	lsp-ui-doc-enable nil
+	lsp-completion-enable-additional-text-edit nil
+	web-mode-enable-current-element-highlight t)
+
+
+
+;; (use-package lsp-pyright
+;;   :ensure t
+;;   :hook (python-mode . (lambda ()
+;;                           (require 'lsp-pyright)
+;;                           (lsp))))
+(put 'narrow-to-region 'disabled nil)
+
+(use-package emmet-mode
+	:ensure t)
+(use-package js2-mode
+	:ensure t)
+(use-package web-mode
+	:ensure t)
+
+(use-package prettier
+	:ensure t)
