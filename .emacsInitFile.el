@@ -547,7 +547,7 @@
 (require 'mu4e)
 (require 'smtpmail)
 
-
+(setq mu4e-change-filenames-when-moving t)
 (setq mu4e-get-mail-command "mbsync -a")
 
 ;; DMS coordinates  40° 35' 12.16" N and a longitude of -73° 48' 41.31" W.
@@ -638,9 +638,9 @@
 (setq message-kill-buffer-on-exit t)
 
     (setq mu4e-bookmarks
-          '((:name "ariUnread messages" :query "g:unread AND NOT g:trashed AND NOT maildir:/marina59/ari-old/ AND NOT maildir:/marina59/fastmail/Spam/" :key ?u)
-            (:name "ariToday's messages" :query "d:today AND NOT g:trashed AND NOT g:replied AND NOT g:passed AND NOT maildir:/marina59/ari-old/ AND NOT maildir:/marina59/fastmail/Archive/ AND NOT maildir:/marina59/fastmail/Spam/ AND NOT maildir:/marina59/fastmail/Trash/ AND NOT maildir:/marina59/fastmail/Sent/ AND NOT maildir:/marina59/fastmail/Drafts/" :key ?t)
-            (:name "ariLast 7 days" :query "d:7d..now AND NOT g:trashed AND NOT g:replied AND NOT g:passed AND NOT maildir:/marina59/fastmail/Archive/ AND NOT maildir:/marina59/ari-old/ AND NOT maildir:/marina59/fastmail/Spam/ AND NOT maildir:/marina59/fastmail/Trash/ AND NOT maildir:/marina59/fastmail/Sent/ AND NOT maildir:/marina59/fastmail/Drafts/" :key ?w)))
+          '((:name "ariUnread messages" :query "g:unread AND NOT g:trashed AND NOT maildir:/marina59/ari-old/ AND NOT maildir:/marina59/fastmail/Spam/ AND NOT maildir:/marina59/fastmail/LearnSpam/" :key ?u)
+            (:name "ariToday's messages" :query "d:today AND NOT g:trashed AND NOT g:replied AND NOT g:passed AND NOT maildir:/marina59/ari-old/ AND NOT maildir:/marina59/fastmail/Archive/ AND NOT maildir:/marina59/fastmail/Spam/ AND NOT maildir:/marina59/fastmail/Trash/ AND NOT maildir:/marina59/fastmail/Sent/ AND NOT maildir:/marina59/fastmail/Drafts/ AND NOT maildir:/marina59/fastmail/LearnSpam/" :key ?t)
+            (:name "ariLast 7 days" :query "d:7d..now AND NOT g:trashed AND NOT g:replied AND NOT g:passed AND NOT maildir:/marina59/fastmail/Archive/ AND NOT maildir:/marina59/ari-old/ AND NOT maildir:/marina59/fastmail/Spam/ AND NOT maildir:/marina59/fastmail/Trash/ AND NOT maildir:/marina59/fastmail/Sent/ AND NOT maildir:/marina59/fastmail/Drafts/ AND NOT maildir:/marina59/fastmail/LearnSpam/" :key ?w)))
 
 
 
@@ -752,6 +752,8 @@
 (require 'ob-js)
 
 (add-to-list 'org-babel-load-languages '(js . t))
+(add-to-list 'org-babel-load-languages '(mermaid . t))
+(add-to-list 'org-babel-load-languages '(scheme . t))
 (org-babel-do-load-languages 'org-babel-load-languages org-babel-load-languages)
 (add-to-list 'org-babel-tangle-lang-exts '("js" . "js")) 
 
@@ -924,3 +926,21 @@
     (define-key map (kbd "G") #'elfeed-search-update--force))
 
   (define-key elfeed-show-mode-map (kbd "w") #'elfeed-show-yank))
+
+(use-package pyvenv
+  :ensure t
+  :config
+  (pyvenv-mode t)
+
+  ;; Set correct Python interpreter
+  (setq pyvenv-post-activate-hooks
+        (list (lambda ()
+                (setq python-shell-interpreter (concat pyvenv-virtual-env "venv/bin/python3")))))
+  (setq pyvenv-post-deactivate-hooks
+        (list (lambda ()
+                (setq python-shell-interpreter "python3")))))
+
+
+
+;; (setq python-shell-interpreter "ipython3"
+;;       python-shell-interpreter-args "-i ")
