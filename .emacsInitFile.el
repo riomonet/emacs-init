@@ -2,11 +2,10 @@
 
 (setq custom-file "~/org/org-files/custom.el")
 
-
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/"))
 (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/"))
-
+(package-initialize)
 
 (unless (package-installed-p 'use-package)
   ;; (package-refresh-contents :async)
@@ -105,11 +104,11 @@
 (load "/home/alpha/org/develop/az-elisp-function.el")
 
 
-(quelpa
- '(quelpa-use-package
-   :fetcher git
-   :url "https://github.com/quelpa/quelpa-use-package.git"))
-(require 'quelpa-use-package)
+;; (quelpa
+;;  '(quelpa-use-package
+;;    :fetcher git
+;;    :url "https://github.com/quelpa/quelpa-use-package.git"))
+;; (require 'quelpa-use-package)
 
 
 
@@ -462,10 +461,12 @@
 
 
   ;; Load the theme files before enabling a theme
-  (modus-themes-load-themes)
+  ;; (modus-themes-load-themes)
   :config
   ;; Load the theme of your choice:
-  (modus-themes-load-vivendi) ;; OR (modus-themes-load-vivendi)
+  (load-theme 'modus-vivendi)
+  ;; (modus-themes-load-vivendi)
+  ;; OR (modus-themes-load-vivendi)
   :bind ("<f5>" . modus-themes-toggle))
 
 
@@ -541,7 +542,7 @@
 (setq epa-pinentry-mode 'loopback)
 
 ;; Add mu4e to the load-path:
-;; (add-to-list 'load-path "/usr/share/emacs/site-lisp/mu4e")
+(add-to-list 'load-path "/usr/local/share/emacs/site-lisp/mu4e")
 
 
 (require 'mu4e)
@@ -751,17 +752,18 @@
 
 (require 'ob-js)
 
-(add-to-list 'org-babel-load-languages '(js . t))
-(add-to-list 'org-babel-load-languages '(mermaid . t))
-(add-to-list 'org-babel-load-languages '(scheme . t))
-(org-babel-do-load-languages 'org-babel-load-languages org-babel-load-languages)
-(add-to-list 'org-babel-tangle-lang-exts '("js" . "js")) 
+;; (add-to-list 'org-babel-load-languages '(js . t))
+;; (add-to-list 'org-babel-load-languages '(mermaid . t))
+;; (add-to-list 'org-babel-load-languages '(scheme . t))
+;; (org-babel-do-load-languages 'org-babel-load-languages org-babel-load-languages)
+;; (add-to-list 'org-babel-tangle-lang-exts '("js" . "js")) 
 
-(define-key global-map (kbd "<XF86AudioMute>") #'shell) 
+(define-key global-map (kbd "<XF86AudioMute>") #'shell)
+(define-key global-map (kbd "<f1>") #'shell) 
 
 
 (defun my-move ()
-(set-window-buffer (selected-window)"*AZ_MB*"))
+  (set-window-buffer (selected-window)"*AZ_MB*"))
 
 
 (setq zoneinfo-style-world-list ; M-x shell timedatectl list-timezones
